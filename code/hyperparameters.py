@@ -62,9 +62,14 @@ agent_multiple_parameters = [
 # Gamma, alpha, Greedy
 iql_multiple_parameters = [
     {
-        'gamma': 0.99, #0.99, #0.8,
-        'greedy': 0.9, #0.9,
-        'alpha': 0.01, #0.01, #0.8
+        'gamma': 0.8,
+        'greedy': 0.5,
+        'alpha': 0.8,
+    },
+    {
+        'gamma': 0.99,  # described in arXiv:2204.00703v4 paper
+        'greedy': 0.9,
+        'alpha': 0.8,
     }
 ]
 
