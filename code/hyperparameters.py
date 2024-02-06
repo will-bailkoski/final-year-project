@@ -95,7 +95,6 @@ evaluation_multiple_parameters = [
     }
 ]
 
-# REWARD
 # Reward function to use
 reward_multiple_parameters = [
     {

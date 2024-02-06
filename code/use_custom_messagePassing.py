@@ -68,35 +68,14 @@ def _policyState(agent_name, agents, observation, done, time_step, episode_num=0
     return agent.play_normal(observation, time_step)
 
 
-def create_env(num_of_agent, num_of_cycles, local_ratio, multiple, render_mode):
-    """
-    Creates the environment to be played in
-
-    num_of_agent = 4 - The number of agents to be created.  Default is default for Simple Spread
-
-    num_of_cycles = 10 - The number of frames (step for each agent).  Default is default for Simple Spread
-
-
-    local_ratio = 0.5 - Weight applied to local and global reward.  Local is collisions global is distance to
-    landmarks.  Default is default for simple spread
-
-    multiple = False - Whether you need a parallel environment to be created
-    
-    render_mode = 'ansi' - Whether to be rendered on screen.  Default is not.
-    """
-    if multiple:  # decentralised must compute each individually (not parallel)
-        return parallel_env(render_mode, num_of_agent, num_of_cycles,
-                            local_ratio)
-    return env(render_mode="human", N=num_of_agent, max_cycles=num_of_cycles, local_ratio=local_ratio)
-
-
-centralised = False
+multiple = False
 NUM_OF_AGENTS = 4
-TIMESTEPS_PER_EPISODE = 10
-render_mode = 'human'
+NUM_OF_TIMESTEPS = 10
 
-
-env = create_env(NUM_OF_AGENTS, TIMESTEPS_PER_EPISODE, 0.5, centralised, render_mode)
+if multiple:
+    env = parallel_env(render_mode="human", N=NUM_OF_AGENTS, max_cycles=NUM_OF_TIMESTEPS, local_ratio=0.5)
+else:
+    env = env(render_mode="human", N=NUM_OF_AGENTS, max_cycles=NUM_OF_TIMESTEPS, local_ratio=0.5)
 
 # env.reset()
 
@@ -131,14 +110,11 @@ env = create_env(NUM_OF_AGENTS, TIMESTEPS_PER_EPISODE, 0.5, centralised, render_
 # plt.plot(steps, y)
 # plt.show()
 
-num_episode = int(input('Insert number of episodes: '))
+NUM_OF_EPISODES = int(input('Insert number of episodes: '))
 
-agent_type = AgentType.IQL
-agents = {f'agent_{i}': IndependentQLearning(f'agent_{i}', 10) for i in range(NUM_OF_AGENTS)}
 
-adj_table = graph_hyperparameters['graph']
-agents = create_marl_agents(NUM_OF_AGENTS, num_episode, NUM_OF_TIMESTEPS,
-                            graph_hyperparameters['gamma_hop'], adj_table, graph_hyperparameters['connection_slow'])
+agents = create_marl_agents(NUM_OF_AGENTS, NUM_OF_EPISODES, NUM_OF_TIMESTEPS,
+                            graph_hyperparameters['gamma_hop'], graph_hyperparameters['graph'], graph_hyperparameters['connection_slow'])
 
 agent_old_state = {agent: -1 for agent in agents.keys()}
 
@@ -149,7 +125,7 @@ agent_old_state = {agent: -1 for agent in agents.keys()}
 t = 0
 rewardX = []
 steps = []
-for i in range(0, num_episode):
+for i in range(0, NUM_OF_EPISODES):
 
     # print(f'Episode: {i}')
     env.reset()

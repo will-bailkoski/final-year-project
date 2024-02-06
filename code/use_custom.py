@@ -64,6 +64,7 @@ def _policyState(agent_name, agents, observation, done, time_step, episode_num=0
     # print(f'observation: {observation}, and Agent: {agent}')
     return agent.play_normal(observation, time_step)
 
+
 multiple = True
 NUM_OF_AGENTS = 4
 NUM_OF_TIMESTEPS = 10

@@ -1,5 +1,6 @@
 from agent import Agent, IndependentQLearning, MARL_Comm
 from hyperparameters import graph_hyperparameters, AgentType
+from copy import deepcopy
 
 
 def create_agents(num_of_agents, agent_type, num_of_episodes=0, length_of_episode=0):
@@ -37,9 +38,10 @@ def convert_adj_to_power_graph(adj_table, gamma_hop, connection_slow=False):
 
     adj_table - The adjacency graph to convert
 
-    gamma_hop - the amount the graph is allowed to change by
+    gamma_hop - maximum communication distance possible by agents
 
-    connection_slow - False means the amount of jumps is factored in (so if the node is 2 jumps away its set to 2)
+    connection_slow - if False then we don't care about the distance, we just care if they are able to communicate
+    within gamma_hop, i.e. False imitates instant communication.
 
     Returns
     --------
@@ -60,6 +62,7 @@ def convert_adj_to_power_graph(adj_table, gamma_hop, connection_slow=False):
                 i_neighbours = neighbours[i]
                 i_neighbours.append((j, col))
 
+    # print(neighbours)
     # Updates the adjacency table to be power graph.
     for k in range(gamma_hop - 1):
         new_table = deepcopy(adj_table)
@@ -81,6 +84,7 @@ def convert_adj_to_power_graph(adj_table, gamma_hop, connection_slow=False):
 
     return adj_table
 
+
 def create_marl_agents(num_of_agents, num_of_episodes, length_of_episode, gamma_hop, adjacency_table, connection_slow):
     """
     Creates the MARL agents
@@ -98,12 +102,11 @@ def create_marl_agents(num_of_agents, num_of_episodes, length_of_episode, gamma_
     connection_slow - Whether we want the connections to be instantaneous or whether a time delay should be incurred
 
     """
-
+    print("are we here yet?")
     agents = {f'agent_{i}': MARL_Comm(f'agent_{i}', num_of_agents, num_of_episodes, length_of_episode, gamma_hop) for i
               in range(num_of_agents)}
 
     power_graph = convert_adj_to_power_graph(adjacency_table, gamma_hop, connection_slow)
-    print(power_graph)
     for i, row in enumerate(power_graph):
         for j, col in enumerate(row):
             if col != 0:
