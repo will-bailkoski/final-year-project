@@ -152,12 +152,12 @@ for i in range(0, NUM_OF_EPISODES):
 
         for agent_name in agents.keys():  # Update u and v
             agent_obj = agents[agent_name]
-            print(f"NUM_OF_EPISODES: {NUM_OF_EPISODES}, "
-                  f"t: {t}, "
-                  f"agent_old_state[{agent_name}]: {agent_old_state[agent_name]}, "
-                  f"encode_state(observations[{agent_name}], NUM_OF_AGENTS): {encode_state(observations[agent_name], NUM_OF_AGENTS)}, "
-                  f"actions[{agent_name}]: {actions[agent_name]}, "
-                  f"rewards[{agent_name}]: {rewards[agent_name]}")
+            # print(f"NUM_OF_EPISODES: {NUM_OF_EPISODES}, "
+            #       f"t: {t}, "
+            #       f"agent_old_state[{agent_name}]: {agent_old_state[agent_name]}, "
+            #       f"encode_state(observations[{agent_name}], NUM_OF_AGENTS): {encode_state(observations[agent_name], NUM_OF_AGENTS)}, "
+            #       f"actions[{agent_name}]: {actions[agent_name]}, "
+            #       f"rewards[{agent_name}]: {rewards[agent_name]}")
             agent_obj.update(i, t, agent_old_state[agent_name],
                              encode_state(observations[agent_name], NUM_OF_AGENTS),
                              actions[agent_name], rewards[agent_name])
@@ -167,6 +167,7 @@ for i in range(0, NUM_OF_EPISODES):
             agent_obj.update_values(NUM_OF_EPISODES, t)
 
         rewardStep.append(final_reward(rewards))
+
     # while t < 10:
     #     # steps.append(t)
     #     t = t + 1
@@ -214,6 +215,7 @@ for i in range(0, 1):
     observations = env.reset()[0]
 
     t = 0
+    total = []
     while t < 10:
         t = t + 1
         actions = {}
@@ -223,4 +225,7 @@ for i in range(0, 1):
             actions[agent_name] = action
         observations, rewards, terminations, truncations, infos = env.step(actions)
         print(f'Step: {t} agents actions: {actions.values()}')
+        total.append(sum(actions.values()))
         print(f'printing observation {observations}, reward: {rewards}, infos:{infos}')
+
+    print(f'The total number of agents processing on each time step was {total}')

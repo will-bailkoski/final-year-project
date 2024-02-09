@@ -397,7 +397,7 @@ class MARL_Comm(Agent):
 
         # Update the u-set to contain the latest reward and current state
 
-        print(episode_num, time_step, old_state, action)
+        # print(episode_num, time_step, old_state, action)
         old_set = self.uSet[episode_num][time_step][old_state][action]
         old_set.add((reward, current_state))
         self.uSet[episode_num][time_step][old_state][action] = old_set
@@ -405,7 +405,7 @@ class MARL_Comm(Agent):
         new_set = set()
 
         # Add the new data from other agents into vSet.  Only added in the vSet when it 'reaches' the agent (dis == 0).
-        # Added into the vset at the episode and timestep of when the message was sent
+        # Added into the v-set at the episode and timestep of when the message was sent
         for message_data in self.next_add:
             time_step_other, episode_num_other, agent_name_other, current_state_other, action_other, next_state_other, reward_other, dis = message_data
 
