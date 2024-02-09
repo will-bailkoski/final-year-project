@@ -216,7 +216,6 @@ class MARL_Comm(Agent):
         # The set of H number of Q-Tables.
         self.qTables = {i + 1: defaultdict(lambda: defaultdict(lambda: length_of_episode)) for i in
                         range(length_of_episode)}
-        print("""HERE IS A QTABLE:    """, self.qTables)
 
         # This will contain the number of times each state action has been seen for each timestep
         self.nTables = {i + 1: defaultdict(lambda: defaultdict(lambda: 0)) for i in range(length_of_episode)}
@@ -381,7 +380,7 @@ class MARL_Comm(Agent):
         """
         This updates the u set and v set using the set update rules
 
-        episode_num - The episode number the agent is one
+        episode_num - The current episode number
 
         time_step - The time step the agent is on
 
@@ -396,7 +395,9 @@ class MARL_Comm(Agent):
 
         # This might be how to update the two sets???? Maybe...
 
-        # Update the uset to contain the latest reward and current state
+        # Update the u-set to contain the latest reward and current state
+
+        print(episode_num, time_step, old_state, action)
         old_set = self.uSet[episode_num][time_step][old_state][action]
         old_set.add((reward, current_state))
         self.uSet[episode_num][time_step][old_state][action] = old_set
@@ -499,7 +500,7 @@ class MARL_Comm(Agent):
 
         agent_obj - The agent to send the message to
 
-        distance - How far away the agent it
+        distance - How far away the agent is
 
         """
 

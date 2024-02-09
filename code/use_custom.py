@@ -10,7 +10,7 @@ from reward_functions import final_reward
 import matplotlib.pyplot as plt
 
 
-def _policy(agent_name, agents, observation, done, time_step, episode_num):
+def _policy(agent_name, agents, observation, done, time_step):
     """
     Chooses the action for the agent
 
@@ -38,7 +38,7 @@ def _policy(agent_name, agents, observation, done, time_step, episode_num):
     return agent.policy(observation, time_step)
 
 
-def _policyState(agent_name, agents, observation, done, time_step, episode_num=0):
+def _policyState(agent_name, agents, observation, done, time_step):
     """
     Chooses the action for the agent
 
@@ -61,7 +61,6 @@ def _policyState(agent_name, agents, observation, done, time_step, episode_num=0
     if done:
         return None
     agent = agents[agent_name]
-    # print(f'observation: {observation}, and Agent: {agent}')
     return agent.play_normal(observation, time_step)
 
 
@@ -117,23 +116,21 @@ for i in range(0, NUM_OF_EPISODES):
     if (i % 50) == 0:
         print(i)
 
-    #print(f'Episode: {i}')
     agent_old_state = {agent: -1 for agent in agents.keys()}
     observations = env.reset()[0]
     steps.append(i)
     t = 0
     rewardStep = []
     while t < NUM_OF_TIMESTEPS:
-        # steps.append(t)
         t = t + 1
         actions = {}
         for agent_name in agents.keys():  # Take action
             # agent_old_state[agent_name] = encode_state(observations[agent_name], agent_name)
             # print(f' {observations} type: {type(observations)}  0 element {observations[0]} type {type(observations[0])} agent name: {agent_name}')
             agent_old_state[agent_name] = observations[agent_name]
-            action = _policy(agent_name, agents, observations[agent_name], False, t - 1, i)
+            action = _policy(agent_name, agents, observations[agent_name], False, t - 1)
             actions[agent_name] = action
-        # print("we are about to take a step")
+
         observations, rewards, terminations, truncations, infos = env.step(actions)
 
         for agent_name in agents.keys():  # Update the values
@@ -143,14 +140,10 @@ for i in range(0, NUM_OF_EPISODES):
             old_action = actions[agent_name]
             reward = rewards[agent_name]
             agent_obj.update_qTable(old_state, current_state, old_action, reward, t - 1)
+
         rewardStep.append(final_reward(rewards))
 
-        # print(f'printing observation {observations}, reward: {rewards}, infos:{infos}')
-
     rewardX.append(sum(rewardStep) / t)
-
-    # print(final_reward(rewards))
-
 
 def to_dict(d):
     if isinstance(d, defaultdict):
