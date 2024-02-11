@@ -229,7 +229,7 @@ class MARL_Comm(Agent):
                          range(length_of_episode + gamma_hop + 1)} for i in
                      range(-length_of_episode - 1, num_of_episodes + round(gamma_hop % length_of_episode) + 1)}
 
-        self.next_add = set()
+        self.next_add = set()  # this is for received messages that need to be incorporated into the decision-making
 
         # Of form agent_name, distance = 0 if no connection
         self._neighbours = {f'agent_{i}': 0 for i in range(num_of_agents)}
@@ -371,9 +371,9 @@ class MARL_Comm(Agent):
 
         for agent in self._neighbours.keys():
             if self._neighbours[agent] != 0:
-                agent_obj = agents_dict[agent]
-                self.send_message(episode_num, time_step, old_state, action, current_state, reward, agent_obj,
-                                  self._neighbours[agent])
+                agent_obj = agents_dict[agent]  # send a message to every neighbour, receiver is agent_obj
+                message_tuple = tuple([time_step, episode_num, self.agent_name(), old_state, action, current_state, reward])
+                agent_obj.receive_message(message_tuple, self._neighbours[agent])
 
     def update(self, episode_num, time_step, old_state, current_state, action, reward):
 
@@ -407,7 +407,8 @@ class MARL_Comm(Agent):
         # Add the new data from other agents into vSet.  Only added in the vSet when it 'reaches' the agent (dis == 0).
         # Added into the v-set at the episode and timestep of when the message was sent
         for message_data in self.next_add:
-            time_step_other, episode_num_other, agent_name_other, current_state_other, action_other, next_state_other, reward_other, dis = message_data
+            time_step_other, episode_num_other, agent_name_other, current_state_other, action_other, next_state_other, \
+                reward_other, dis = message_data
 
             if dis == 0:
 
@@ -476,34 +477,11 @@ class MARL_Comm(Agent):
         dis - How far away the agent sending the message is
         """
 
+        # print(message, dis)
+
         # message is [time_step, episode_num, self.agent_name, current_state, action, next_state, reward]
         message_list = list(message)
         message_list.append(dis)
         self.next_add.add(tuple(message_list))
-
-    def send_message(self, episode_num, time_step, current_state, action, next_state, reward, agent_obj, distance):
-
-        """
-        How an agent sends a message
-
-        episode_num - The episode number
-
-        time_step - The time step
-
-        current_state - The old state the agent was on
-
-        action - The action taken
-
-        next_state - The state to be seen after the action is taken
-
-        reward - The reward given
-
-        agent_obj - The agent to send the message to
-
-        distance - How far away the agent is
-
-        """
-
-        message_tuple = tuple([time_step, episode_num, self.agent_name(), current_state, action, next_state, reward])
-        agent_obj.receive_message(message_tuple, distance)
-
+        print(f"{self.agent_name()} has messages:")
+        print(self.next_add)

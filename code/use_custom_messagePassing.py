@@ -36,8 +36,8 @@ def _policy(agent_name, agents, observation, done, time_step):
         return None
     if done:
         return None
+
     agent = agents[agent_name]
-    # print(f'observation: {observation}, and Agent: {agent}')
     return agent.policy(observation, time_step)
 
 
@@ -63,8 +63,8 @@ def _policyState(agent_name, agents, observation, done, time_step, episode_num=0
         return None
     if done:
         return None
+
     agent = agents[agent_name]
-    # print(f'observation: {observation}, and Agent: {agent}')
     return agent.play_normal(observation, time_step)
 
 
@@ -152,12 +152,6 @@ for i in range(0, NUM_OF_EPISODES):
 
         for agent_name in agents.keys():  # Update u and v
             agent_obj = agents[agent_name]
-            # print(f"NUM_OF_EPISODES: {NUM_OF_EPISODES}, "
-            #       f"t: {t}, "
-            #       f"agent_old_state[{agent_name}]: {agent_old_state[agent_name]}, "
-            #       f"encode_state(observations[{agent_name}], NUM_OF_AGENTS): {encode_state(observations[agent_name], NUM_OF_AGENTS)}, "
-            #       f"actions[{agent_name}]: {actions[agent_name]}, "
-            #       f"rewards[{agent_name}]: {rewards[agent_name]}")
             agent_obj.update(i, t, agent_old_state[agent_name],
                              encode_state(observations[agent_name], NUM_OF_AGENTS),
                              actions[agent_name], rewards[agent_name])
@@ -168,32 +162,7 @@ for i in range(0, NUM_OF_EPISODES):
 
         rewardStep.append(final_reward(rewards))
 
-    # while t < 10:
-    #     # steps.append(t)
-    #     t = t + 1
-    #     actions = {}
-    #     for agent_name in agents.keys():  # Take action
-    #         # agent_old_state[agent_name] = encode_state(observations[agent_name], agent_name)
-    #         agent_old_state[agent_name] = observations[agent_name]
-    #         action = _policy(agent_name, agents, observations[agent_name], False, t - 1)
-    #         actions[agent_name] = action
-    #     observations, rewards, terminations, truncations, infos = env.step(actions)
-    #
-    #     for agent_name in agents.keys():  # Update the values
-    #         agent_obj = agents[agent_name]
-    #         old_state = agent_old_state[agent_name]
-    #         current_state = observations[agent_name]
-    #         old_action = actions[agent_name]
-    #         reward = rewards[agent_name]
-    #         agent_obj.update_qTable(old_state, current_state, old_action, reward, t - 1)
-    #
-    #     rewardStep.append(final_reward(rewards))
-
-        # print(f'printing observation {observations}, reward: {rewards}, infos:{infos}')
-
     rewardX.append(sum(rewardStep) / t)
-
-    # print(final_reward(rewards))
 
 
 def to_dict(d):

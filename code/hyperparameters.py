@@ -22,7 +22,7 @@ multiple_graph_parameters = [
     {
         'graph': [[0, 1, 0, 0], [1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0]],
         'connection_slow': True,
-        'gamma_hop': 0
+        'gamma_hop': 1
     },
     {
         'graph': [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],

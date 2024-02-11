@@ -107,7 +107,6 @@ def create_marl_agents(num_of_agents, num_of_episodes, length_of_episode, gamma_
               in range(num_of_agents)}
 
     power_graph = convert_adj_to_power_graph(adjacency_table, gamma_hop, connection_slow)
-
     for i, row in enumerate(power_graph): # here we copy the info in power_graph to the relevant agents
         for j, col in enumerate(row):
             if col != 0:
