@@ -137,8 +137,8 @@ for i in range(0, NUM_OF_EPISODES):
         t = t + 1
         actions = {}
         for agent_name in agents.keys():  # Take action
-            # agent_old_state[agent_name] = encode_state(observations[agent_name], NUM_OF_AGENTS)
-            agent_old_state[agent_name] = observations[agent_name]
+            # agent_old_state[agent_name] = observations[agent_name]
+            agent_old_state[agent_name] = encode_state(observations[agent_name], NUM_OF_AGENTS)
             action = _policy(agent_name, agents, observations[agent_name], False, t)
             actions[agent_name] = action
         observations, rewards, terminations, truncations, infos = env.step(actions)
