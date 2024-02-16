@@ -467,6 +467,8 @@ class MARL_Comm(Agent):
                 # Assume we have gone through all the data in the vSet at this episode and time step.  Means we can add new data (from other agents) but not reuse old data
                 self.vSet[episode_num][time_step] = defaultdict(lambda: defaultdict(lambda: set()))
 
+                # print(f"This is {self.agent_name()}'s \n u-set: {self.uSet} \n v-set: {self.vSet} \n q-table: {self.qTables}")
+
     def receive_message(self, message, dis):
 
         """
@@ -483,5 +485,5 @@ class MARL_Comm(Agent):
         message_list = list(message)
         message_list.append(dis)
         self.next_add.add(tuple(message_list))
-        print(f"{self.agent_name()} has messages:")
-        print(self.next_add)
+        # print(f"{self.agent_name()} has messages:")
+        # print(self.next_add)
