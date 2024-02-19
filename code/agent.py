@@ -260,6 +260,8 @@ class MARL_Comm(Agent):
         # The v-table values.  Set to H as this corresponds to the q tables currently.
         self.vTable = {j + 1: defaultdict(lambda: self.H) for j in range(length_of_episode + 1)}
 
+        self.actors = 0  # the number of agents performing an action in a given step
+
     def update_neighbour(self, agent_to_update, connection_quality):
 
         """
@@ -300,6 +302,10 @@ class MARL_Comm(Agent):
             if q_table[state][i] > max_value:
                 max_value = q_table[state][i]
                 move = i
+
+        if move == 1:
+            self.actors += 1
+            # print(f"{self.agent_name()} has actor value {self.actors}")
         return move
 
     def play_normal(self, state, time_step, *args):
@@ -331,7 +337,7 @@ class MARL_Comm(Agent):
     def choose_smallest_value(self, state, time_step):
 
         """
-        This chooses the smallest value - either from the max value from the Q-Table or H
+        This chooses the smallest value - either the max value from the Q-Table or H
 
         state - The current state we are in
 
@@ -375,7 +381,7 @@ class MARL_Comm(Agent):
                 message_tuple = tuple([time_step, episode_num, self.agent_name(), old_state, action, current_state, reward])
                 agent_obj.receive_message(message_tuple, self._neighbours[agent])
 
-    def update(self, episode_num, time_step, old_state, current_state, action, reward):
+    def update_v_u(self, episode_num, time_step, old_state, current_state, action, reward):
 
         """
         This updates the u set and v set using the set update rules
@@ -430,7 +436,7 @@ class MARL_Comm(Agent):
                     reward_new, next_state = element
                     self.vSet[episode_num][time_step][state][action].add((reward_new, next_state))
 
-    def update_values(self, episode_num_max, time_step_max):
+    def update_q(self, episode_num_max, time_step_max):
 
         """
         This updates the q_table and the vTable
@@ -464,7 +470,8 @@ class MARL_Comm(Agent):
 
                             self.vTable[time_step][next_state] = self.choose_smallest_value(state, time_step)
 
-                # Assume we have gone through all the data in the vSet at this episode and time step.  Means we can add new data (from other agents) but not reuse old data
+                # Assume we have gone through all the data in the vSet at this episode and time step.  Means we can add
+                # new data (from other agents) but not reuse old data
                 self.vSet[episode_num][time_step] = defaultdict(lambda: defaultdict(lambda: set()))
 
                 # print(f"This is {self.agent_name()}'s \n u-set: {self.uSet} \n v-set: {self.vSet} \n q-table: {self.qTables}")
@@ -483,7 +490,15 @@ class MARL_Comm(Agent):
 
         # message is [time_step, episode_num, self.agent_name, current_state, action, next_state, reward]
         message_list = list(message)
+        if message_list[4] == 1:
+            self.actors += 1
         message_list.append(dis)
         self.next_add.add(tuple(message_list))
         # print(f"{self.agent_name()} has messages:")
         # print(self.next_add)
+
+    def clear_actors(self):
+        self.actors = 0
+
+    def print_actors(self):
+        print(f"{self.agent_name()} has recorded {self.actors} agents taking action")

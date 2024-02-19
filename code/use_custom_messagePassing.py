@@ -136,11 +136,14 @@ for i in range(0, NUM_OF_EPISODES):
     while t < NUM_OF_TIMESTEPS:
         t = t + 1
         actions = {}
-        for agent_name in agents.keys():  # Take action
+        for agent_name in agents.keys(): # Take action
+            agent_obj = agents[agent_name]
+            agent_obj.clear_actors()
             # agent_old_state[agent_name] = observations[agent_name]
             agent_old_state[agent_name] = encode_state(observations[agent_name], NUM_OF_AGENTS)
             action = _policy(agent_name, agents, observations[agent_name], False, t)
             actions[agent_name] = action
+            print(f"{agent_name} has taken action {action}")
         observations, rewards, terminations, truncations, infos = env.step(actions)
 
         for agent_name in agents.keys():  # Send messages
@@ -152,13 +155,17 @@ for i in range(0, NUM_OF_EPISODES):
 
         for agent_name in agents.keys():  # Update u and v
             agent_obj = agents[agent_name]
-            agent_obj.update(i, t, agent_old_state[agent_name],
-                             encode_state(observations[agent_name], NUM_OF_AGENTS),
-                             actions[agent_name], rewards[agent_name])
+            agent_obj.update_v_u(i, t, agent_old_state[agent_name],
+                                 encode_state(observations[agent_name], NUM_OF_AGENTS),
+                                 actions[agent_name], rewards[agent_name])
 
         for agent_name in agents.keys():  # Update the values
             agent_obj = agents[agent_name]
-            agent_obj.update_values(NUM_OF_EPISODES, t)
+            agent_obj.update_q(NUM_OF_EPISODES, t)
+
+        for agent_name in agents.keys():
+            agent_obj = agents[agent_name]
+            agent_obj.print_actors()
 
         rewardStep.append(final_reward(rewards))
 

@@ -15,14 +15,14 @@ class AgentType(Enum):
 # Adjacency graph & connection slow & gamma hop
 multiple_graph_parameters = [
     {
-        'graph': lambda x: [[0 if i == j else 1 for i in range(x)] for j in range(x)],
+        'graph': [[0 if i == j else 1 for i in range(4)] for j in range(4)],
         'connection_slow': False,
-        'gamma_hop': 1
+        'gamma_hop': 0
     },
     {
         'graph': [[0, 1, 0, 0], [1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0]],
-        'connection_slow': True,
-        'gamma_hop': 1
+        'connection_slow': False,
+        'gamma_hop': 3
     },
     {
         'graph': [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
