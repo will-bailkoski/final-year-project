@@ -153,15 +153,15 @@ for i in range(0, NUM_OF_EPISODES):
                                       encode_state(observations[agent_name], NUM_OF_AGENTS), rewards[agent_name],
                                       agents)
 
-        for agent_name in agents.keys():  # Update u and v
-            agent_obj = agents[agent_name]
-            agent_obj.update_v_u(i, t, agent_old_state[agent_name],
-                                 encode_state(observations[agent_name], NUM_OF_AGENTS),
-                                 actions[agent_name], rewards[agent_name])
-
-        for agent_name in agents.keys():  # Update the values
-            agent_obj = agents[agent_name]
-            agent_obj.update_q(NUM_OF_EPISODES, t)
+        # for agent_name in agents.keys():  # Update u and v
+        #     agent_obj = agents[agent_name]
+        #     agent_obj.update_v_u(i, t, agent_old_state[agent_name],
+        #                          encode_state(observations[agent_name], NUM_OF_AGENTS),
+        #                          actions[agent_name], rewards[agent_name])
+        #
+        # for agent_name in agents.keys():  # Update the values
+        #     agent_obj = agents[agent_name]
+        #     agent_obj.update_q(NUM_OF_EPISODES, t)
 
         for agent_name in agents.keys():
             agent_obj = agents[agent_name]
