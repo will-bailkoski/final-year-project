@@ -3,12 +3,9 @@ abstracting which environment is used"""
 from pettingZoo.PettingZoo.pettingzoo.mpe.custom_env.custom_env import env, parallel_env
 from create_agents import create_marl_agents
 from hyperparameters import train_hyperparameters, agent_hyperparameters, AgentType, graph_hyperparameters
-from utils import encode_state
-from agent import IndependentQLearning
 from collections import defaultdict
 
-import time
-import create_agents
+import random
 from reward_functions import final_reward
 
 import matplotlib.pyplot as plt
@@ -123,6 +120,12 @@ agent_old_state = {agent: -1 for agent in agents.keys()}
 t = 0
 rewardX = []
 steps = []
+
+max_explore = {i + 1: (None, float("-inf")) for i in range(NUM_OF_TIMESTEPS)}
+leader = list(agents.keys())[0]
+explorers = list(agents.keys())[1:]
+parity_list = ([0] * (NUM_OF_AGENTS - 1)) + [1]
+
 for i in range(0, NUM_OF_EPISODES):
 
     if (i % 50) == 0:
@@ -133,44 +136,64 @@ for i in range(0, NUM_OF_EPISODES):
     steps.append(i)
     t = 0
     rewardStep = []
+
+
     while t < NUM_OF_TIMESTEPS:
         t = t + 1
         actions = {}
-        for agent_name in agents.keys(): # Take action
+        for agent_name in agents.keys():  # Decide and take action
             agent_obj = agents[agent_name]
-            agent_obj.clear_actors()
-            # agent_old_state[agent_name] = observations[agent_name]
-            agent_old_state[agent_name] = encode_state(observations[agent_name], NUM_OF_AGENTS)
-            action = _policy(agent_name, agents, observations[agent_name], False, t)
+            agent_old_state[agent_name] = observations[agent_name]
+            action = _policy(agent_name, agents, observations[agent_name], False, t)  # decide action
             actions[agent_name] = action
-            print(f"{agent_name} has taken action {action}")
-        observations, rewards, terminations, truncations, infos = env.step(actions)
+        observations, rewards, terminations, truncations, infos = env.step(actions)  # take actions
 
-        for agent_name in agents.keys():  # Send messages
+        for agent_name in agents.keys():  # wipe the parity of that timestep
+            agent_obj = agents[agent_name]
+            agent_obj.clear_parity(t - 1)
+
+        step_reward = final_reward(rewards)
+        new_best = False
+        if step_reward > max_explore[t][1]:  # "is this set of actions better than our previous best?"
+            max_explore[t] = (actions, step_reward)
+            new_best = True  # "then we don't need to worry about changing our actions this episode"
+
+        agent_obj = agents[leader]
+        if not new_best:
+            agent_obj.message_passing_leader(i,  # i or NUM_OF_EPISODES
+                                             t, agent_old_state[leader], actions[leader],
+                                             observations[leader], rewards[leader],
+                                             agents, random.sample(parity_list, len(parity_list)))
+        else:
+            agent_obj.message_passing(i,  # i or NUM_OF_EPISODES
+                                      t, agent_old_state[leader], actions[leader],
+                                      observations[leader], rewards[leader],
+                                      agents)
+
+        for agent_name in explorers:  # Send messages
             agent_obj = agents[agent_name]
             agent_obj.message_passing(i,  # i or NUM_OF_EPISODES
                                       t, agent_old_state[agent_name], actions[agent_name],
-                                      encode_state(observations[agent_name], NUM_OF_AGENTS), rewards[agent_name],
+                                      observations[agent_name], rewards[agent_name],
                                       agents)
 
-        # for agent_name in agents.keys():  # Update u and v
-        #     agent_obj = agents[agent_name]
-        #     agent_obj.update_v_u(i, t, agent_old_state[agent_name],
-        #                          encode_state(observations[agent_name], NUM_OF_AGENTS),
-        #                          actions[agent_name], rewards[agent_name])
-        #
-        # for agent_name in agents.keys():  # Update the values
-        #     agent_obj = agents[agent_name]
-        #     agent_obj.update_q(NUM_OF_EPISODES, t)
-
-        for agent_name in agents.keys():
+        for agent_name in agents.keys():  # Update u and v
             agent_obj = agents[agent_name]
-            agent_obj.print_actors()
+            agent_obj.update_v_u(i, t, agent_old_state[agent_name],
+                                 observations[agent_name], actions[agent_name], rewards[agent_name])
 
-        rewardStep.append(final_reward(rewards))
+        for agent_name in agents.keys():  # Update the values
+            agent_obj = agents[agent_name]
+            agent_obj.update_q(NUM_OF_EPISODES, t)
 
+        rewardStep.append(step_reward)
+
+    for agent_name in agents.keys():
+        agent_obj = agents[agent_name]
+        print(f"{agent_obj.agent_name()} has parity list {agent_obj.printlist()}")
     rewardX.append(sum(rewardStep) / t)
 
+print(max_explore)
 
 def to_dict(d):
     if isinstance(d, defaultdict):

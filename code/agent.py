@@ -260,7 +260,8 @@ class MARL_Comm(Agent):
         # The v-table values.  Set to H as this corresponds to the q tables currently.
         self.vTable = {j + 1: defaultdict(lambda: self.H) for j in range(length_of_episode + 1)}
 
-        self.actors = 0  # the number of agents performing an action in a given step
+        self.parity_list = [0] * length_of_episode  # initialised as "no changes have been instructed yet"
+
 
     def update_neighbour(self, agent_to_update, connection_quality):
 
@@ -302,10 +303,6 @@ class MARL_Comm(Agent):
             if q_table[state][i] > max_value:
                 max_value = q_table[state][i]
                 move = i
-
-        if move == 1:
-            self.actors += 1
-            # print(f"{self.agent_name()} has actor value {self.actors}")
         return move
 
     def play_normal(self, state, time_step, *args):
@@ -378,7 +375,8 @@ class MARL_Comm(Agent):
         for agent in self._neighbours.keys():
             if self._neighbours[agent] != 0:
                 agent_obj = agents_dict[agent]  # send a message to every neighbour, receiver is agent_obj
-                message_tuple = tuple([time_step, episode_num, self.agent_name(), old_state, action, current_state, reward])
+                message_tuple = tuple([time_step, episode_num, self.agent_name(), old_state, action, current_state,
+                                       reward])
                 agent_obj.receive_message(message_tuple, self._neighbours[agent])
 
     def update_v_u(self, episode_num, time_step, old_state, current_state, action, reward):
@@ -489,16 +487,32 @@ class MARL_Comm(Agent):
         # print(message, dis)
 
         # message is [time_step, episode_num, self.agent_name, current_state, action, next_state, reward]
+
         message_list = list(message)
-        if message_list[4] == 1:
-            self.actors += 1
+        print(f"the message passed is {message_list}, received by {self.agent_name()}")
+        if len(message_list) == 8:
+            self.parity_list[message[0] - 1] = message_list.pop(-1)
         message_list.append(dis)
         self.next_add.add(tuple(message_list))
         # print(f"{self.agent_name()} has messages:")
         # print(self.next_add)
 
-    def clear_actors(self):
-        self.actors = 0
+    def message_passing_leader(self, episode_num, time_step, old_state, action, current_state, reward, agents_dict,
+                               parity_list):
 
-    def print_actors(self):
-        print(f"{self.agent_name()} has recorded {self.actors} agents taking action")
+        if parity_list[0] == 1:
+            self.parity_list[time_step - 1] = 1
+
+        print(f"message passed for episode {episode_num}, timestep {time_step}. parity rn is {parity_list} ")
+        for agent in self._neighbours.keys():
+            if self._neighbours[agent] != 0:
+                agent_obj = agents_dict[agent]  # send a message to every neighbour, receiver is agent_obj
+                message_tuple = tuple([time_step, episode_num, self.agent_name(), old_state, action, current_state,
+                                       reward, parity_list[list(self._neighbours.keys()).index(agent)]])
+                agent_obj.receive_message(message_tuple, self._neighbours[agent])
+
+    def clear_parity(self, timestep):
+        self.parity_list[timestep] = 0
+    def printlist(self):
+
+        return self.parity_list
