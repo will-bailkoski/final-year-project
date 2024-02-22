@@ -294,16 +294,19 @@ class MARL_Comm(Agent):
         """
 
         # Choose the largest value
+        q_table = self.qTables[time_step]
         max_value = float('-inf')
         move = -1
-        q_table = self.qTables[time_step]
         values = [0, 1]
-        random.shuffle(values)  # Shuffled to get randomness at start
+        random.shuffle(values)
         for i in values:
             if q_table[state][i] > max_value:
                 max_value = q_table[state][i]
                 move = i
-        return move
+        parity_move = (move + self.parity_list[time_step - 1]) % 2
+        print(f"i am {self.agent_name()} on timestep {time_step}. i was originally going to do {move} but now i will do {parity_move}")
+        self.parity_list[time_step - 1] = 0
+        return parity_move
 
     def play_normal(self, state, time_step, *args):
 
@@ -489,7 +492,7 @@ class MARL_Comm(Agent):
         # message is [time_step, episode_num, self.agent_name, current_state, action, next_state, reward]
 
         message_list = list(message)
-        print(f"the message passed is {message_list}, received by {self.agent_name()}")
+        # print(f"the message passed is {message_list}, received by {self.agent_name()}")
         if len(message_list) == 8:
             self.parity_list[message[0] - 1] = message_list.pop(-1)
         message_list.append(dis)
@@ -503,7 +506,7 @@ class MARL_Comm(Agent):
         if parity_list[0] == 1:
             self.parity_list[time_step - 1] = 1
 
-        print(f"message passed for episode {episode_num}, timestep {time_step}. parity rn is {parity_list} ")
+        # print(f"message passed for episode {episode_num}, timestep {time_step}. parity rn is {parity_list} ")
         for agent in self._neighbours.keys():
             if self._neighbours[agent] != 0:
                 agent_obj = agents_dict[agent]  # send a message to every neighbour, receiver is agent_obj
@@ -511,8 +514,5 @@ class MARL_Comm(Agent):
                                        reward, parity_list[list(self._neighbours.keys()).index(agent)]])
                 agent_obj.receive_message(message_tuple, self._neighbours[agent])
 
-    def clear_parity(self, timestep):
-        self.parity_list[timestep] = 0
     def printlist(self):
-
         return self.parity_list

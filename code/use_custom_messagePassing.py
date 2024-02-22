@@ -136,7 +136,11 @@ for i in range(0, NUM_OF_EPISODES):
     steps.append(i)
     t = 0
     rewardStep = []
+    print(max_explore)
 
+    for agent_name in agents.keys():
+        agent_obj = agents[agent_name]
+        print(f"{agent_obj.agent_name()} has parity list {agent_obj.printlist()}")
 
     while t < NUM_OF_TIMESTEPS:
         t = t + 1
@@ -147,10 +151,7 @@ for i in range(0, NUM_OF_EPISODES):
             action = _policy(agent_name, agents, observations[agent_name], False, t)  # decide action
             actions[agent_name] = action
         observations, rewards, terminations, truncations, infos = env.step(actions)  # take actions
-
-        for agent_name in agents.keys():  # wipe the parity of that timestep
-            agent_obj = agents[agent_name]
-            agent_obj.clear_parity(t - 1)
+        # print(f"actions taken are {list(actions.values())}")
 
         step_reward = final_reward(rewards)
         new_best = False
@@ -160,10 +161,13 @@ for i in range(0, NUM_OF_EPISODES):
 
         agent_obj = agents[leader]
         if not new_best:
+            # send message to parity agent to revert
+
+            random.shuffle(parity_list)
             agent_obj.message_passing_leader(i,  # i or NUM_OF_EPISODES
                                              t, agent_old_state[leader], actions[leader],
                                              observations[leader], rewards[leader],
-                                             agents, random.sample(parity_list, len(parity_list)))
+                                             agents, parity_list)
         else:
             agent_obj.message_passing(i,  # i or NUM_OF_EPISODES
                                       t, agent_old_state[leader], actions[leader],
@@ -188,9 +192,7 @@ for i in range(0, NUM_OF_EPISODES):
 
         rewardStep.append(step_reward)
 
-    for agent_name in agents.keys():
-        agent_obj = agents[agent_name]
-        print(f"{agent_obj.agent_name()} has parity list {agent_obj.printlist()}")
+
     rewardX.append(sum(rewardStep) / t)
 
 print(max_explore)
