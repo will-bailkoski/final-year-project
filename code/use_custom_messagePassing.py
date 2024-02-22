@@ -119,6 +119,7 @@ agent_old_state = {agent: -1 for agent in agents.keys()}
 
 t = 0
 rewardX = []
+rewardsimprov = []
 steps = []
 
 max_explore = {i + 1: (None, float("-inf")) for i in range(NUM_OF_TIMESTEPS)}
@@ -136,11 +137,11 @@ for i in range(0, NUM_OF_EPISODES):
     steps.append(i)
     t = 0
     rewardStep = []
-    print(max_explore)
-
-    for agent_name in agents.keys():
-        agent_obj = agents[agent_name]
-        print(f"{agent_obj.agent_name()} has parity list {agent_obj.printlist()}")
+    max_reward = []
+    #
+    # for agent_name in agents.keys():
+    #     agent_obj = agents[agent_name]
+    #     print(f"{agent_obj.agent_name()} has parity list {agent_obj.printlist()}")
 
     while t < NUM_OF_TIMESTEPS:
         t = t + 1
@@ -159,20 +160,20 @@ for i in range(0, NUM_OF_EPISODES):
             max_explore[t] = (actions, step_reward)
             new_best = True  # "then we don't need to worry about changing our actions this episode"
 
-        agent_obj = agents[leader]
+        old_parity = parity_list[:]
+        random.shuffle(parity_list)
+        parity_message = parity_list[:]
         if not new_best:
-            # send message to parity agent to revert
+            for j in range(len(parity_list)):
+                parity_message[j] = (old_parity[j] + parity_list[j]) % 2
 
-            random.shuffle(parity_list)
-            agent_obj.message_passing_leader(i,  # i or NUM_OF_EPISODES
+        # print(f"{new_best} leader is sending {parity_message}")
+
+        agent_obj = agents[leader]
+        agent_obj.message_passing_leader(i,  # i or NUM_OF_EPISODES
                                              t, agent_old_state[leader], actions[leader],
                                              observations[leader], rewards[leader],
-                                             agents, parity_list)
-        else:
-            agent_obj.message_passing(i,  # i or NUM_OF_EPISODES
-                                      t, agent_old_state[leader], actions[leader],
-                                      observations[leader], rewards[leader],
-                                      agents)
+                                             agents, parity_message)
 
         for agent_name in explorers:  # Send messages
             agent_obj = agents[agent_name]
@@ -188,12 +189,21 @@ for i in range(0, NUM_OF_EPISODES):
 
         for agent_name in agents.keys():  # Update the values
             agent_obj = agents[agent_name]
-            agent_obj.update_q(NUM_OF_EPISODES, t)
+            agent_obj.update_q(i, t)
+
+        # for agent_name in agents.keys():  # Update the values
+        #     agent_obj = agents[agent_name]
+        #     old_state = agent_old_state[agent_name]
+        #     current_state = observations[agent_name]
+        #     old_action = actions[agent_name]
+        #     reward = rewards[agent_name]
+        #     agent_obj.update_qTable(old_state, current_state, old_action, reward, t - 1)
 
         rewardStep.append(step_reward)
+        max_reward.append(max_explore[t][1])
 
-
-    rewardX.append(sum(rewardStep) / t)
+    rewardsimprov.append(sum(max_reward) / NUM_OF_TIMESTEPS)
+    rewardX.append(sum(rewardStep) / NUM_OF_TIMESTEPS)
 
 print(max_explore)
 
@@ -207,6 +217,9 @@ for agent in agents:
     print(f'Final Qtable {to_dict(agents[agent].qTables)}')
 
 plt.plot(steps, rewardX)
+plt.show()
+
+plt.plot(steps, rewardsimprov)
 plt.show()
 
 print("EVALUATING-------")

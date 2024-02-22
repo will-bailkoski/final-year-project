@@ -99,9 +99,9 @@ class IndependentQLearning(Agent):
 
         # Chooses a random choice with  probability of greedy value
         self.episode += 1
-        greedy = max(self.greedy_value * (self.episode ** -0.5), 0.1)
-        #greedy = self.greedy_value
-        #print(greedy)
+        # greedy = max(self.greedy_value * (self.episode ** -0.5), 0.1)
+        greedy = self.greedy_value
+        # print(greedy)
 
         if random.random() < greedy:
             #print('chosing random')
@@ -304,7 +304,7 @@ class MARL_Comm(Agent):
                 max_value = q_table[state][i]
                 move = i
         parity_move = (move + self.parity_list[time_step - 1]) % 2
-        print(f"i am {self.agent_name()} on timestep {time_step}. i was originally going to do {move} but now i will do {parity_move}")
+        #print(f"i am {self.agent_name()} on timestep {time_step}. i was originally going to do {move} but now i will do {parity_move}")
         self.parity_list[time_step - 1] = 0
         return parity_move
 
@@ -495,6 +495,7 @@ class MARL_Comm(Agent):
         # print(f"the message passed is {message_list}, received by {self.agent_name()}")
         if len(message_list) == 8:
             self.parity_list[message[0] - 1] = message_list.pop(-1)
+
         message_list.append(dis)
         self.next_add.add(tuple(message_list))
         # print(f"{self.agent_name()} has messages:")
@@ -512,6 +513,18 @@ class MARL_Comm(Agent):
                 agent_obj = agents_dict[agent]  # send a message to every neighbour, receiver is agent_obj
                 message_tuple = tuple([time_step, episode_num, self.agent_name(), old_state, action, current_state,
                                        reward, parity_list[list(self._neighbours.keys()).index(agent)]])
+                agent_obj.receive_message(message_tuple, self._neighbours[agent])
+
+    def message_passing_revert(self, episode_num, time_step, agents_dict, parity_list):
+
+        if parity_list[0] == 1:
+            self.parity_list[time_step - 1] = 1
+
+        # print(f"message passed for episode {episode_num}, timestep {time_step}. parity rn is {parity_list} ")
+        for agent in self._neighbours.keys():
+            if self._neighbours[agent] != 0:
+                agent_obj = agents_dict[agent]  # send a message to every neighbour, receiver is agent_obj
+                message_tuple = tuple([time_step, episode_num, self.agent_name(), parity_list[list(self._neighbours.keys()).index(agent)]])
                 agent_obj.receive_message(message_tuple, self._neighbours[agent])
 
     def printlist(self):
