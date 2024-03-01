@@ -191,14 +191,6 @@ for i in range(0, NUM_OF_EPISODES):
             agent_obj = agents[agent_name]
             agent_obj.update_q(i, t)
 
-        # for agent_name in agents.keys():  # Update the values
-        #     agent_obj = agents[agent_name]
-        #     old_state = agent_old_state[agent_name]
-        #     current_state = observations[agent_name]
-        #     old_action = actions[agent_name]
-        #     reward = rewards[agent_name]
-        #     agent_obj.update_qTable(old_state, current_state, old_action, reward, t - 1)
-
         rewardStep.append(step_reward)
         max_reward.append(max_explore[t][1])
 

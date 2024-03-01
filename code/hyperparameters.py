@@ -70,6 +70,11 @@ iql_multiple_parameters = [
         'gamma': 0.99,  # described in arXiv:2204.00703v4 paper
         'greedy': 0.9,
         'alpha': 0.8,
+    },
+    {
+        'gamma': 0.8,
+        'greedy': 0,    # leader-explorer
+        'alpha': 0.8
     }
 ]
 

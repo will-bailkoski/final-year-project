@@ -62,7 +62,6 @@ class Agent:
 
 
 class IndependentQLearning(Agent):
-
     """Each Agent learns its own Q-Table"""
 
     def __init__(self, agent_name, length_of_episode):
@@ -91,25 +90,25 @@ class IndependentQLearning(Agent):
 
         state - The current state the agent is in
 
-        *args - 
+        *args -
 
         Returns
         An action.
-        """        
+        """
 
         # Chooses a random choice with  probability of greedy value
         self.episode += 1
-        # greedy = max(self.greedy_value * (self.episode ** -0.5), 0.1)
-        greedy = self.greedy_value
+        greedy = max(self.greedy_value * (self.episode ** -0.5), 0.1)
+        # greedy = self.greedy_value
         # print(greedy)
 
         if random.random() < greedy:
-            #print('chosing random')
+            # print('chosing random')
 
             return super().policy(state, args)
         # Choose the best move
         else:
-            #print('chosing according to policy')
+            # print('chosing according to policy')
 
             max_value = float('-inf')
             move = -1
@@ -121,21 +120,20 @@ class IndependentQLearning(Agent):
                     move = i
 
             if move == -1:
-                #print("Random cos state never seen")
+                # print("Random cos state never seen")
                 return super().policy(state)
             else:
-                #print("Seen move")
+                # print("Seen move")
                 return move
-            
 
-    def play_normal(self, state, *args):  
+    def play_normal(self, state, *args):
 
         """
         This allows the agent to play normally to show on the screen
 
         state - The state the agent is in
 
-        *args - 
+        *args -
 
         Returns
         The best action
@@ -162,7 +160,7 @@ class IndependentQLearning(Agent):
 
         """
         This updates the qTable
-        
+
         old_state - The old state the agent was in
 
         current_state - The new state the agent is in after taking the action
@@ -178,7 +176,7 @@ class IndependentQLearning(Agent):
         # print(old_value)
         if old_value == float('-inf'):
             old_value = self.H
-        old_value_mult = (1-self.alpha) * old_value
+        old_value_mult = (1 - self.alpha) * old_value
 
         max_value = float('-inf')
         chosen = False
@@ -189,7 +187,7 @@ class IndependentQLearning(Agent):
         if not chosen:
             max_value = self.H
 
-        rewards = self.alpha * (reward + (self.gamma*max_value))
+        rewards = self.alpha * (reward + (self.gamma * max_value))
         new_value = old_value_mult + rewards
         self.qTable[old_state][action] = new_value
 
@@ -529,3 +527,167 @@ class MARL_Comm(Agent):
 
     def printlist(self):
         return self.parity_list
+
+
+class IndependentQLearningWithLeader(Agent):
+    """Each Agent learns its own Q-Table"""
+
+    def __init__(self, agent_name, length_of_episode):
+
+        """
+        Creates a IQL Agent
+
+        agent_name - The agent name
+
+        length_of_episode - The length of an episode
+        """
+        self.episode = 0
+        self.gamma = iql_hyperparameters['gamma']
+        self.greedy_value = 0
+        self.alpha = iql_hyperparameters['alpha']
+        self.qTable = defaultdict(lambda: defaultdict(lambda: length_of_episode))
+        self.H = length_of_episode
+        self.parity_list = [0] * length_of_episode
+        super().__init__(agent_name)
+
+    def get_qtable(self):
+        return self.qTable
+
+    def get_parity_list(self):
+        return self.parity_list
+
+    def policy(self, state, *args):
+        """
+        Returns an action based off the Q-Table, either random or the best move
+
+        state - The current state the agent is in
+
+        *args -
+
+        Returns
+        An action.
+        """
+
+        time_step = args[0]
+
+        # Chooses a random choice with  probability of greedy value
+        self.episode += 1
+        # greedy = max(self.greedy_value * (self.episode ** -0.5), 0.1)
+        greedy = self.greedy_value
+        if random.random() < greedy:
+            return super().policy(state, args)
+        else:  # Choose the best move
+            max_value = float('-inf')
+            move = -1
+            values = [0, 1]
+            random.shuffle(values)
+            for i in values:
+                if self.qTable[state][i] > max_value:
+                    max_value = self.qTable[state][i]
+                    move = i
+
+            if move == -1:
+                return super().policy(state)
+            else:
+                newmove = (move + self.parity_list[time_step - 1]) % 2
+                #print(f"i am {self.agent_name()} on timestep {time_step}. i was originally going to do {move} but now "
+                 #     f"i will do {newmove}")
+                # self.parity_list[time_step - 1] = 0
+                return newmove
+
+    def play_normal(self, state, *args):
+
+        """
+        This allows the agent to play normally to show on the screen
+
+        state - The state the agent is in
+
+        *args -
+
+        Returns
+        The best action
+        """
+
+        # render checks if it is being rendered on the screen
+
+        # This will pick the best action
+        max_value = float('-inf')
+        move = -1
+        values = [0, 1]
+        random.shuffle(values)
+        for i in values:
+            if self.qTable[state][i] > max_value:
+                max_value = self.qTable[state][i]
+                move = i
+        if move == -1:
+            return super().policy(state)
+        else:
+
+            return move
+
+    def update_qTable(self, old_state, current_state, action, reward, time_step):
+
+        """
+        This updates the qTable
+
+        old_state - The old state the agent was in
+
+        current_state - The new state the agent is in after taking the action
+
+        action - The action taken from the old_state
+
+        reward - The reward gained
+
+        time_step - The time step we are currently on
+        """
+
+        old_value = self.qTable[old_state][action]
+        # print(old_value)
+        if old_value == float('-inf'):
+            old_value = self.H
+        old_value_mult = (1 - self.alpha) * old_value
+
+        max_value = float('-inf')
+        chosen = False
+        for i in range(2):  # The actions which can be done
+            if self.qTable[current_state][i] > max_value:
+                max_value = self.qTable[current_state][i]
+                chosen = True
+        if not chosen:
+            max_value = self.H
+
+        rewards = self.alpha * (reward + (self.gamma * max_value))
+        new_value = old_value_mult + rewards
+        self.qTable[old_state][action] = new_value
+
+    def receive_message(self, message):
+
+        """
+        This is how the agent should receive a message
+
+        message - The tuple containing the message
+
+        dis - How far away the agent sending the message is
+        """
+
+        # print(f"the message passed is {message_list}, received by {self.agent_name()}")
+
+        message_list = list(message)
+        self.parity_list[message[0] - 1] = message_list.pop(-1)
+        # self.next_add.add(tuple(message_list))
+        # print(f"{self.agent_name()} has messages:")
+        # print(self.next_add)
+
+    def message_passing_leader(self, time_step, agents_dict, parity_list):
+
+        # message sent by the leader to force exploration
+
+        if parity_list[0] == 1:
+            self.parity_list[time_step - 1] = 1
+            return
+
+            # print(f"message passed for episode {episode_num}, timestep {time_step}. parity rn is {parity_list} ")
+        for agent in agents_dict.keys():
+            agent_obj = agents_dict[agent]  # send a message to every neighbour, receiver is agent_obj
+            message_tuple = tuple([time_step, parity_list[list(agents_dict.keys()).index(agent)]])
+            agent_obj.receive_message(message_tuple)
