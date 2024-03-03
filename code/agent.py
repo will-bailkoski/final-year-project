@@ -548,6 +548,7 @@ class IndependentQLearningWithLeader(Agent):
         self.qTable = defaultdict(lambda: defaultdict(lambda: length_of_episode))
         self.H = length_of_episode
         self.parity_list = [0] * length_of_episode
+        self.max_policy = [random.randint(0, 1) for t in range(0, length_of_episode)]
         super().__init__(agent_name)
 
     def get_qtable(self):
@@ -569,6 +570,10 @@ class IndependentQLearningWithLeader(Agent):
         """
 
         time_step = args[0]
+        action = (self.max_policy[time_step] + self.parity_list[time_step]) % 2
+        print(f"i want to take action {self.max_policy[time_step ]}, but my parity is {self.parity_list[time_step]} so instead ill do {action}")
+        self.parity_list[time_step] = 0
+        return action
 
         # Chooses a random choice with  probability of greedy value
         self.episode += 1
@@ -670,24 +675,26 @@ class IndependentQLearningWithLeader(Agent):
         dis - How far away the agent sending the message is
         """
 
-        # print(f"the message passed is {message_list}, received by {self.agent_name()}")
+        print(f"the message passed is {message}, received by {self.agent_name()}")
 
         message_list = list(message)
         self.parity_list[message[0] - 1] = message_list.pop(-1)
+        self.max_policy[message[0] - 1] = message_list.pop(-1)
+
+        print(f"{self.agent_name()} has parity list {self.parity_list} and max policy {self.max_policy}")
         # self.next_add.add(tuple(message_list))
         # print(f"{self.agent_name()} has messages:")
         # print(self.next_add)
 
-    def message_passing_leader(self, time_step, agents_dict, parity_list):
+    def message_passing_leader(self, time_step, agents_dict, max_policy, parity_list):
 
         # message sent by the leader to force exploration
 
-        if parity_list[0] == 1:
-            self.parity_list[time_step - 1] = 1
-            return
+        print(f"the message is t = {time_step}, policy = {max_policy}, parity = {parity_list}")
 
-            # print(f"message passed for episode {episode_num}, timestep {time_step}. parity rn is {parity_list} ")
+        # print(f"message passed for episode, timestep {time_step}. parity rn is {parity_list} ")
         for agent in agents_dict.keys():
+            ind = list(agents_dict.keys()).index(agent)
             agent_obj = agents_dict[agent]  # send a message to every neighbour, receiver is agent_obj
-            message_tuple = tuple([time_step, parity_list[list(agents_dict.keys()).index(agent)]])
+            message_tuple = tuple([time_step, max_policy[agent], parity_list[ind]])
             agent_obj.receive_message(message_tuple)

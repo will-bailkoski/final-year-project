@@ -33,7 +33,6 @@ def _policy(agent_name, agents, observation, done, time_step):
         return None
     agent = agents[agent_name]
     # print(f'observation: {observation}, and Agent: {agent}')
-    # print("we are here")
     return agent.policy(observation, time_step)
 
 
@@ -72,13 +71,12 @@ if multiple:
 else:
     env = env(render_mode="human", N=NUM_OF_AGENTS, max_cycles=NUM_OF_TIMESTEPS, local_ratio=0.5)
 
-
 NUM_OF_EPISODES = int(input('Insert number of episodes: '))
 agents = {f'agent_{i}': IndependentQLearningWithLeader(f'agent_{i}', NUM_OF_TIMESTEPS) for i in range(NUM_OF_AGENTS)}
 
 leader = list(agents.keys())[0]
 parity_list = ([0] * (NUM_OF_AGENTS - 1)) + [1]
-max_explore = {i + 1: (None, float("-inf")) for i in range(NUM_OF_TIMESTEPS)}
+max_explore = {i + 1: ({agent: None for agent in agents.keys()}, float("-inf")) for i in range(NUM_OF_TIMESTEPS)}
 
 rewardX = []
 steps = []
@@ -86,6 +84,8 @@ for i in range(0, NUM_OF_EPISODES):
 
     if (i % 50) == 0:
         print(i)
+
+    print(f"Episode {i}: {max_explore}")
 
     agent_old_state = {agent: -1 for agent in agents.keys()}
     observations = env.reset()[0]
@@ -95,28 +95,31 @@ for i in range(0, NUM_OF_EPISODES):
     while t < NUM_OF_TIMESTEPS:
         t = t + 1
         actions = {}
+        n = 0
         for agent_name in agents.keys():  # Take action
             # agent_old_state[agent_name] = encode_state(observations[agent_name], agent_name)
             # print(f' {observations} type: {type(observations)}  0 element {observations[0]} type {type(observations[0])} agent name: {agent_name}')
             agent_old_state[agent_name] = observations[agent_name]
             action = _policy(agent_name, agents, observations[agent_name], False, t - 1)  # choose action
             actions[agent_name] = action
-        observations, rewards, terminations, truncations, infos = env.step(actions)  # execute actions
 
+        observations, rewards, terminations, truncations, infos = env.step(actions)  # execute actions
+        print(f"ep {i}, time {t}, actions taken are {actions}")
         step_reward = final_reward(rewards)
         new_best = False
         if step_reward > max_explore[t][1]:  # "is this set of actions better than our previous best?"
             max_explore[t] = (actions, step_reward)
+            print("NEW BEST!")
             new_best = True  # "then we don't need to worry about changing our actions this episode"
 
-        old_parity = parity_list[:]
+        # old_parity = parity_list[:]
         random.shuffle(parity_list)
-        parity_message = parity_list[:]
-        if not new_best:
-            for j in range(len(parity_list)):
-                parity_message[j] = (old_parity[j] + parity_list[j]) % 2
+        # parity_message = parity_list[:]
+        # if not new_best:
+        #     for j in range(len(parity_list)):
+        #         parity_message[j] = (old_parity[j] + parity_list[j]) % 2
 
-        agents[leader].message_passing_leader(t, agents, parity_message)
+        agents[leader].message_passing_leader(t, agents, max_explore[t][0], parity_list)
 
         for agent_name in agents.keys():  # Update the values
             agent_obj = agents[agent_name]
@@ -139,7 +142,7 @@ for i in range(0, NUM_OF_EPISODES):
 
         observations, rewards, terminations, truncations, infos = env.step(actions)
 
-        rewardStep.append(step_reward)
+        rewardStep.append(final_reward(rewards))
 
     rewardX.append(sum(rewardStep) / t)
 
@@ -156,6 +159,7 @@ plt.plot(steps, rewardX)
 plt.show()
 
 print("EVALUATING-------")
+print(max_explore)
 
 repeats = 1
 t_opt_policy = [1, 0, 1, 1, 1, 1, 1, 1, 1, 1]
