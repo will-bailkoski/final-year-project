@@ -108,6 +108,7 @@ else:
 
 NUM_OF_EPISODES = int(input('Insert number of episodes: '))
 agents = {f'agent_{i}': IndependentQLearning(f'agent_{i}', NUM_OF_TIMESTEPS) for i in range(NUM_OF_AGENTS)}
+opt_dict = {1 : {'agent_0': 1, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, 2 : {'agent_0': 0, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, 3: {'agent_0': 1, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, 4: {'agent_0': 1, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, 5: {'agent_0': 1, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, 6:{'agent_0': 1, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, 7:{'agent_0': 1, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, 8:{'agent_0': 1, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, 9:{'agent_0': 1, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, 10:{'agent_0': 1, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}}
 
 rewardX = []
 steps = []
@@ -118,6 +119,7 @@ for i in range(0, NUM_OF_EPISODES):
 
     agent_old_state = {agent: -1 for agent in agents.keys()}
     observations = env.reset()[0]
+    avg_for_ep = []
     steps.append(i)
     t = 0
     rewardStep = []
@@ -131,9 +133,12 @@ for i in range(0, NUM_OF_EPISODES):
             action = _policy(agent_name, agents, observations[agent_name], False, t - 1)
             actions[agent_name] = action
 
+        actions = opt_dict[t]
+
         observations, rewards, terminations, truncations, infos = env.step(actions)
 
-        print(f"reward: {rewards} \n covariance matrix: {-1 * infos['matrix'].trace()}")
+        # print(f"reward: {rewards} \n covariance matrix: {-1 * infos['matrix'].trace()}")
+        avg_for_ep.append(-1 * infos['matrix'].trace())
 
         for agent_name in agents.keys():  # Update the values
             agent_obj = agents[agent_name]
@@ -159,6 +164,7 @@ for i in range(0, NUM_OF_EPISODES):
         rewardStep.append(final_reward(rewards))
 
     rewardX.append(sum(rewardStep) / t)
+print(sum(avg_for_ep) / 10)
 
 def to_dict(d):
     if isinstance(d, defaultdict):

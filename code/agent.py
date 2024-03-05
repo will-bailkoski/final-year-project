@@ -571,7 +571,7 @@ class IndependentQLearningWithLeader(Agent):
 
         time_step = args[0]
         action = (self.max_policy[time_step] + self.parity_list[time_step]) % 2
-        print(f"i want to take action {self.max_policy[time_step ]}, but my parity is {self.parity_list[time_step]} so instead ill do {action}")
+        #  print(f"i want to take action {self.max_policy[time_step ]}, but my parity is {self.parity_list[time_step]} so instead ill do {action}")
         self.parity_list[time_step] = 0
         return action
         #
@@ -614,6 +614,9 @@ class IndependentQLearningWithLeader(Agent):
         """
 
         # This will pick the best action
+        t = args[0]
+        return self.max_policy[t]
+
         max_value = float('-inf')
         move = -1
         values = [0, 1]
@@ -672,13 +675,13 @@ class IndependentQLearningWithLeader(Agent):
         dis - How far away the agent sending the message is
         """
 
-        print(f"the message passed is {message}, received by {self.agent_name()}")
+        #  print(f"the message passed is {message}, received by {self.agent_name()}")
 
         message_list = list(message)
         self.parity_list[message[0] - 1] = message_list.pop(-1)
         self.max_policy[message[0] - 1] = message_list.pop(-1)
 
-        print(f"{self.agent_name()} has parity list {self.parity_list} and max policy {self.max_policy}")
+        # print(f"{self.agent_name()} has parity list {self.parity_list} and max policy {self.max_policy}")
         # self.next_add.add(tuple(message_list))
         # print(f"{self.agent_name()} has messages:")
         # print(self.next_add)
@@ -687,7 +690,7 @@ class IndependentQLearningWithLeader(Agent):
 
         # message sent by the leader to force exploration
 
-        print(f"the message is t = {time_step}, policy = {max_policy}, parity = {parity_list}")
+        #  print(f"the message is t = {time_step}, policy = {max_policy}, parity = {parity_list}")
 
         # print(f"message passed for episode, timestep {time_step}. parity rn is {parity_list} ")
         for agent in agents_dict.keys():

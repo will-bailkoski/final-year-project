@@ -77,7 +77,8 @@ agents = {f'agent_{i}': IndependentQLearningWithLeader(f'agent_{i}', NUM_OF_TIME
 leader = list(agents.keys())[0]
 parity_list = ([0] * (NUM_OF_AGENTS - 1)) + [1]
 max_explore = {i + 1: ({agent: None for agent in agents.keys()}, float("-inf")) for i in range(NUM_OF_TIMESTEPS)}
-
+opt_dict = {1 : {'agent_0': 0, 'agent_1': 0, 'agent_2': 1, 'agent_3': 0}, 2 : {'agent_0': 0, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, 3: {'agent_0': 1, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, 4: {'agent_0': 0, 'agent_1': 1, 'agent_2': 0, 'agent_3': 0}, 5: {'agent_0': 0, 'agent_1': 0, 'agent_2': 1, 'agent_3': 0}, 6:{'agent_0': 0, 'agent_1': 0, 'agent_2': 0, 'agent_3': 1}, 7:{'agent_0': 0, 'agent_1': 0, 'agent_2': 1, 'agent_3': 0}, 8:{'agent_0': 0, 'agent_1': 1, 'agent_2': 0, 'agent_3': 0}, 9:{'agent_0': 1, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, 10:{'agent_0': 0, 'agent_1': 0, 'agent_2': 0, 'agent_3': 1}}
+avg_for_ep = []
 rewardX = []
 steps = []
 for i in range(0, NUM_OF_EPISODES):
@@ -85,7 +86,7 @@ for i in range(0, NUM_OF_EPISODES):
     if (i % 50) == 0:
         print(i)
 
-    print(f"Episode {i}: {max_explore}")
+    print(f"Episode {i}:")
 
     agent_old_state = {agent: -1 for agent in agents.keys()}
     observations = env.reset()[0]
@@ -102,14 +103,16 @@ for i in range(0, NUM_OF_EPISODES):
             agent_old_state[agent_name] = observations[agent_name]
             action = _policy(agent_name, agents, observations[agent_name], False, t - 1)  # choose action
             actions[agent_name] = action
+        # actions = opt_dict[t]
 
         observations, rewards, terminations, truncations, infos = env.step(actions)  # execute actions
-        print(f"ep {i}, time {t}, actions taken are {actions}")
+        #  print(f"ep {i}, time {t}, actions taken are {actions}")
 
-        step_reward = final_reward(rewards)
+        step_reward = -1 * infos['matrix'].trace()  # final_reward(rewards)
         if step_reward > max_explore[t][1]:  # "is this set of actions better than our previous best?"
             max_explore[t] = (actions, step_reward)
             print("NEW BEST!")
+            print(t, max_explore[t])
             agents[leader].message_passing_leader(t, agents, max_explore[t][0], [0, 0, 0, 0])  # Confirm it's best
         else:
             random.shuffle(parity_list)
@@ -117,10 +120,10 @@ for i in range(0, NUM_OF_EPISODES):
 
         for agent_name in agents.keys():  # Update the values
             agent_obj = agents[agent_name]
-            old_state = agent_old_state[agent_name]
-            current_state = observations[agent_name]
-            old_action = actions[agent_name]
-            reward = -1 * infos['matrix'].trace()  # rewards[agent_name]
+            old_state = t  # agent_old_state[agent_name]
+            current_state = t + 1  # observations[agent_name]
+            old_action = actions[agent_name]  # max_explore[t][0][agent_name]
+            reward = step_reward  # max_explore[t][1]  # rewards[agent_name]
             agent_obj.update_qTable(old_state, current_state, old_action, reward, t - 1)
 
     # EVALUATION
@@ -131,7 +134,8 @@ for i in range(0, NUM_OF_EPISODES):
         t = t + 1
         actions = {}
         for agent_name in agents.keys():
-            action = _policyState(agent_name, agents, observations[agent_name], False, t - 1)
+            # action = _policyState(agent_name, agents, observations[agent_name], False, t - 1)
+            action = _policyState(agent_name, agents, t, False, t - 1)
             actions[agent_name] = action
 
         observations, rewards, terminations, truncations, infos = env.step(actions)
@@ -139,6 +143,9 @@ for i in range(0, NUM_OF_EPISODES):
         rewardStep.append(final_reward(rewards))
 
     rewardX.append(sum(rewardStep) / t)
+
+print(avg_for_ep)
+print(sum(avg_for_ep) / 10)
 
 def to_dict(d):
     if isinstance(d, defaultdict):
@@ -168,8 +175,7 @@ for i in range(0, repeats):
         t = t + 1
         actions = {}
         for agent_name in agents.keys():  # Take action
-            agent_old_state[agent_name] = observations[agent_name]
-            action = _policyState(agent_name, agents, observations[agent_name], False, t - 1)
+            action = _policyState(agent_name, agents, t, False, t - 1)
             actions[agent_name] = action
         observations, rewards, terminations, truncations, infos = env.step(actions)
         print(f'Step: {t} agents actions: {actions.values()}')
