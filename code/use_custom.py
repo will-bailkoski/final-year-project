@@ -133,6 +133,8 @@ for i in range(0, NUM_OF_EPISODES):
 
         observations, rewards, terminations, truncations, infos = env.step(actions)
 
+        print(f"reward: {rewards} \n covariance matrix: {-1 * infos['matrix'].trace()}")
+
         for agent_name in agents.keys():  # Update the values
             agent_obj = agents[agent_name]
             old_state = agent_old_state[agent_name]
@@ -175,7 +177,9 @@ print("EVALUATING-------")
 repeats = 1
 t_opt_policy = [1, 0, 1, 1, 1, 1, 1, 1, 1, 1]
 for i in range(0, repeats):
+
     observations = env.reset()[0]
+    print(f"Initial observations: {observations}")
 
     t = 0
     total = []
