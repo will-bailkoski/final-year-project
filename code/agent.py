@@ -190,6 +190,7 @@ class IndependentQLearning(Agent):
         rewards = self.alpha * (reward + (self.gamma * max_value))
         new_value = old_value_mult + rewards
         self.qTable[old_state][action] = new_value
+        print(f"the maximum reward is {max_value}\nthe old value is {old_value}\nand the adjust val is {new_value}")
 
 
 class MARL_Comm(Agent):

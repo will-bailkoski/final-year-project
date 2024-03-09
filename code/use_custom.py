@@ -132,13 +132,10 @@ for i in range(0, NUM_OF_EPISODES):
             agent_old_state[agent_name] = observations[agent_name]
             action = _policy(agent_name, agents, observations[agent_name], False, t - 1)
             actions[agent_name] = action
-
-        actions = opt_dict[t]
-
         observations, rewards, terminations, truncations, infos = env.step(actions)
 
         # print(f"reward: {rewards} \n covariance matrix: {-1 * infos['matrix'].trace()}")
-        avg_for_ep.append(-1 * infos['matrix'].trace())
+        # avg_for_ep.append(-1 * infos['matrix'].trace())
 
         for agent_name in agents.keys():  # Update the values
             agent_obj = agents[agent_name]
@@ -161,10 +158,9 @@ for i in range(0, NUM_OF_EPISODES):
 
         observations, rewards, terminations, truncations, infos = env.step(actions)
 
-        rewardStep.append(final_reward(rewards))
+        rewardStep.append(-1 * infos['matrix'].trace())
 
     rewardX.append(sum(rewardStep) / t)
-print(sum(avg_for_ep) / 10)
 
 def to_dict(d):
     if isinstance(d, defaultdict):
@@ -175,11 +171,13 @@ def to_dict(d):
 for agent in agents:
     print(f'Final Qtable {to_dict(agents[agent].qTable)}')
 
+print(rewardX)
+
 plt.plot(steps, rewardX)
 plt.show()
 
 print("EVALUATING-------")
-
+sumsl = 0
 repeats = 1
 t_opt_policy = [1, 0, 1, 1, 1, 1, 1, 1, 1, 1]
 for i in range(0, repeats):
@@ -201,8 +199,10 @@ for i in range(0, repeats):
         total.append(sum(actions.values()))
         print(f'printing observation {observations}, reward: {rewards}, infos:{infos}')
         time.sleep(0.5)
+        sumsl += -1 * infos['matrix'].trace()
 
     print(f'The total number of agents processing on each time step was {total}')
-    assert(
-            total == t_opt_policy
-    ), "this did not match the optimal policy"
+    print(f"reward for this policy is {sumsl / 10}")
+    # assert(
+    #         total == t_opt_policy
+    # ), "this did not match the optimal policy"

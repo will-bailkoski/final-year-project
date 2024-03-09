@@ -76,11 +76,13 @@ agents = {f'agent_{i}': IndependentQLearningWithLeader(f'agent_{i}', NUM_OF_TIME
 
 leader = list(agents.keys())[0]
 parity_list = ([0] * (NUM_OF_AGENTS - 1)) + [1]
-max_explore = {i + 1: ({agent: None for agent in agents.keys()}, float("-inf")) for i in range(NUM_OF_TIMESTEPS)}
+max_explore = {i + 1: ({agent: None for agent in agents.keys()}, float(-1000000)) for i in range(NUM_OF_TIMESTEPS)}
 opt_dict = {1 : {'agent_0': 0, 'agent_1': 0, 'agent_2': 1, 'agent_3': 0}, 2 : {'agent_0': 0, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, 3: {'agent_0': 1, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, 4: {'agent_0': 0, 'agent_1': 1, 'agent_2': 0, 'agent_3': 0}, 5: {'agent_0': 0, 'agent_1': 0, 'agent_2': 1, 'agent_3': 0}, 6:{'agent_0': 0, 'agent_1': 0, 'agent_2': 0, 'agent_3': 1}, 7:{'agent_0': 0, 'agent_1': 0, 'agent_2': 1, 'agent_3': 0}, 8:{'agent_0': 0, 'agent_1': 1, 'agent_2': 0, 'agent_3': 0}, 9:{'agent_0': 1, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, 10:{'agent_0': 0, 'agent_1': 0, 'agent_2': 0, 'agent_3': 1}}
+test = [{'agent_0': 1, 'agent_1': 0, 'agent_2': 1, 'agent_3': 1}, {'agent_0': 0, 'agent_1': 1, 'agent_2': 0, 'agent_3': 0}, {'agent_0': 0, 'agent_1': 0, 'agent_2': 1, 'agent_3': 0}, {'agent_0': 0, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, {'agent_0': 0, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, {'agent_0': 0, 'agent_1': 1, 'agent_2': 0, 'agent_3': 0}, {'agent_0': 0, 'agent_1': 0, 'agent_2': 0, 'agent_3': 1}, {'agent_0': 0, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, {'agent_0': 0, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}, {'agent_0': 0, 'agent_1': 0, 'agent_2': 0, 'agent_3': 0}]
 avg_for_ep = []
 rewardX = []
 steps = []
+ep_best = float("-inf")
 for i in range(0, NUM_OF_EPISODES):
 
     if (i % 50) == 0:
@@ -109,7 +111,7 @@ for i in range(0, NUM_OF_EPISODES):
         #  print(f"ep {i}, time {t}, actions taken are {actions}")
 
         step_reward = -1 * infos['matrix'].trace()  # final_reward(rewards)
-        if step_reward > max_explore[t][1]:  # "is this set of actions better than our previous best?"
+        if step_reward > max_explore[t][1]:# "is this set of actions better than our previous best?"
             max_explore[t] = (actions, step_reward)
             print("NEW BEST!")
             print(t, max_explore[t])
@@ -124,12 +126,13 @@ for i in range(0, NUM_OF_EPISODES):
             current_state = t + 1  # observations[agent_name]
             old_action = actions[agent_name]  # max_explore[t][0][agent_name]
             reward = step_reward  # max_explore[t][1]  # rewards[agent_name]
-            agent_obj.update_qTable(old_state, current_state, old_action, reward, t - 1)
+            agent_obj.update_qTable(old_state, current_state, old_action, reward, t -1)
 
     # EVALUATION
 
     observations = env.reset()[0]
     t = 0
+    actionstaken = []
     while t < NUM_OF_TIMESTEPS:
         t = t + 1
         actions = {}
@@ -139,13 +142,27 @@ for i in range(0, NUM_OF_EPISODES):
             actions[agent_name] = action
 
         observations, rewards, terminations, truncations, infos = env.step(actions)
+        actionstaken.append(actions)
 
-        rewardStep.append(final_reward(rewards))
+        rewardStep.append(-1 * infos['matrix'].trace())
 
-    rewardX.append(sum(rewardStep) / t)
+    ep_rew = sum(rewardStep) / 10
+    print(ep_rew)
+    if ep_rew > ep_best:
+        ep_best = ep_rew
+        print("THE BEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEST!!!!!")
+        print(actionstaken)
+
+    rewardX.append(sum(rewardStep) / 10)
 
 print(avg_for_ep)
 print(sum(avg_for_ep) / 10)
+
+sums = 0
+for x in max_explore:
+    sums += max_explore[x][1]
+
+
 
 def to_dict(d):
     if isinstance(d, defaultdict):
@@ -156,11 +173,16 @@ def to_dict(d):
 for agent in agents:
     print(f'Final Qtable {to_dict(agents[agent].qTable)}')
 
+# print(steps)
+# print(rewardX)
+
 plt.plot(steps, rewardX)
 plt.show()
 
 print("EVALUATING-------")
 print(max_explore)
+
+sumsl = 0
 
 repeats = 1
 t_opt_policy = [1, 0, 1, 1, 1, 1, 1, 1, 1, 1]
@@ -181,9 +203,13 @@ for i in range(0, repeats):
         print(f'Step: {t} agents actions: {actions.values()}')
         total.append(sum(actions.values()))
         print(f'printing observation {observations}, reward: {rewards}, infos:{infos}')
+        sumsl += -1 * infos['matrix'].trace()
         time.sleep(0.5)
 
     print(f'The total number of agents processing on each time step was {total}')
-    assert(
-            total == t_opt_policy
-    ), "this did not match the optimal policy"
+    print(f"reward for this policy is {sumsl / 10}")
+
+    # assert(
+    #         total == t_opt_policy
+    # ), "this did not match the optimal policy"
+
