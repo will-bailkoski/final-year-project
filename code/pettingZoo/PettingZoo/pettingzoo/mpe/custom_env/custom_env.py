@@ -87,13 +87,13 @@ class Scenario(BaseScenario):
         self.A = A.copy()  # state matrix
         self.Q = Q.copy()  # stored_covariance of process noise
         self.n = size(A, 1)  # dynamical state dimension
-        self.P0 = 10 * np.identity(self.n)  # error covarance initial condition
+        self.P0 = 10 * np.identity(self.n)  # error covariance initial condition
         self.stored_cov = None  # stored error covariances
         self.P = None  # current error covariance
         self.Ps = []  # error covariance history
 
         self.rrr = 0
-        # parameters for sensor of the parameter, fixed for everyone at the beginnig
+        # parameters for sensor of the parameter, fixed for everyone at the beginning
         V_raw = 10  # covariance of measurement noise of raw data
         V_proc = 1  # covariance of measurement noise of processed data
         del_raw = int(100 / 25)  # computation delay of raw measurements

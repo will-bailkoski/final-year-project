@@ -615,8 +615,8 @@ class IndependentQLearningWithLeader(Agent):
         """
 
         # This will pick the best action
-        t = args[0]
-        return self.max_policy[t]
+        # t = args[0]
+        # return self.max_policy[t]
 
         max_value = float('-inf')
         move = -1
